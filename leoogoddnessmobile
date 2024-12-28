@@ -1,12 +1,12 @@
 -- Variáveis do script
 local player = game.Players.LocalPlayer
-local attacker = player.Character
-local maxAttackDistance = 999  -- Raio de busca para mobs (pode ser ajustado conforme necessário)
+local attacker = player.Character or player.CharacterAdded:Wait()
+local maxAttackDistance = 999  -- Raio de busca para mobs (ajuste conforme necessário)
 local autoFarmEnabled = false -- Flag para verificar se o AutoFarm está ativado
 local autoTeleportEnabled = false -- Flag para verificar se o AutoTeleport está ativado
 local walkSpeed = 16 -- Velocidade inicial do personagem
 local menuVisible = true -- Variável para controlar a visibilidade do menu
-local mobs = workspace.Objects:FindFirstChild("Mobs") -- Referência para os mobs (ajuste conforme necessário)
+local mobs = workspace:WaitForChild("Objects"):FindFirstChild("Mobs") -- Referência para os mobs (ajuste conforme necessário)
 
 -- Função para criar o Menu
 local function createMenu()
@@ -14,42 +14,15 @@ local function createMenu()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Parent = player:WaitForChild("PlayerGui")
 
-    -- Criar o frame do menu
+    -- Criar o frame maior com tamanho ajustado para 500x550
     local frame = Instance.new("Frame")
     frame.Parent = screenGui
-    frame.Size = UDim2.new(0, 425, 0, 420)  -- Tamanho do menu 425x420
-    frame.Position = UDim2.new(0.5, -212, 0.5, -210)  -- Centralizado na tela (425/2 = 212)
+    frame.Size = UDim2.new(0, 350, 0, 350)  -- Tamanho ajustado para 500x550
     frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)  -- Fundo escuro (cinza)
     frame.BorderSizePixel = 0
-    frame.AnchorPoint = Vector2.new(0.5, 0.5)  -- Centraliza no meio da tela
+    frame.AnchorPoint = Vector2.new(0, 0)  -- Centralizar no meio da tela
     frame.BackgroundTransparency = 0.3  -- Transparência suave para um efeito de sombra
     frame.ClipsDescendants = true  -- Para que os filhos do frame não saiam dos limites
-
-    -- Função para permitir que o menu seja movido
-    local draggingFrame = false
-    local dragStart = nil
-    local startPos = nil
-
-    frame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            draggingFrame = true
-            dragStart = input.Position
-            startPos = frame.Position
-        end
-    end)
-
-    frame.InputChanged:Connect(function(input)
-        if draggingFrame and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
-            local delta = input.Position - dragStart
-            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-
-    frame.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-            draggingFrame = false
-        end
-    end)
 
     -- Criar o botão "X" para fechar o menu no canto superior direito
     local closeButton = Instance.new("TextButton")
@@ -100,8 +73,8 @@ local function createMenu()
     -- Adicionar a marca d'água "Made By Leoo" no topo do menu
     local watermarkLabel = Instance.new("TextLabel")
     watermarkLabel.Parent = frame
-    watermarkLabel.Size = UDim2.new(0.8, 0, 0, 30)  -- Ajustado para 80% da largura
-    watermarkLabel.Position = UDim2.new(0.5, -150, 0, 20)
+    watermarkLabel.Size = UDim2.new(0, 200, 0, 30)
+    watermarkLabel.Position = UDim2.new(0.5, -100, 0, 10)
     watermarkLabel.BackgroundTransparency = 1
     watermarkLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     watermarkLabel.Text = "Made By Leoo"
@@ -113,8 +86,8 @@ local function createMenu()
     -- Adicionar o link do Discord no centro inferior do menu
     local discordLabel = Instance.new("TextLabel")
     discordLabel.Parent = frame
-    discordLabel.Size = UDim2.new(0.8, 0, 0, 20)  -- Ajustado para 80% da largura
-    discordLabel.Position = UDim2.new(0.5, -150, 1, -30)
+    discordLabel.Size = UDim2.new(0, 200, 0, 20)
+    discordLabel.Position = UDim2.new(0.5, -100, 1, -30)
     discordLabel.BackgroundTransparency = 1
     discordLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     discordLabel.Text = "https://discord.gg/p4drBcNg3H"
@@ -125,8 +98,8 @@ local function createMenu()
     -- Criar o botão de AutoFarm
     local autoFarmButton = Instance.new("TextButton")
     autoFarmButton.Parent = frame
-    autoFarmButton.Size = UDim2.new(0, 140, 0, 40)  -- Ajustado para 140x40
-    autoFarmButton.Position = UDim2.new(0.5, -70, 0, 80)  -- Centralizado
+    autoFarmButton.Size = UDim2.new(0, 200, 0, 40)  -- Tamanho ajustado
+    autoFarmButton.Position = UDim2.new(0.5, -110, 0, 80)  -- Ajustado para o centro horizontal
     autoFarmButton.BackgroundColor3 = Color3.fromRGB(0, 0, 139)  -- Azul escuro
     autoFarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     autoFarmButton.Text = "AutoFarm"
@@ -151,14 +124,14 @@ local function createMenu()
         end
     end)
 
-    -- Criar o botão de Auto Teleport
+    -- Criar o botão de AutoTeleport
     local autoTeleportButton = Instance.new("TextButton")
     autoTeleportButton.Parent = frame
-    autoTeleportButton.Size = UDim2.new(0, 140, 0, 40)  -- Ajustado para 140x40
-    autoTeleportButton.Position = UDim2.new(0.5, -70, 0, 140)  -- Centralizado
-    autoTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 139, 139)  -- Verde escuro
+    autoTeleportButton.Size = UDim2.new(0, 200, 0, 40)  -- Tamanho ajustado
+    autoTeleportButton.Position = UDim2.new(0.5, -110, 0, 140)  -- Ajustado para o centro horizontal, abaixo do AutoFarm
+    autoTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 139, 139)  -- Cor do botão de teleport
     autoTeleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    autoTeleportButton.Text = "Auto Teleport"
+    autoTeleportButton.Text = "AutoTeleport"
     autoTeleportButton.Font = Enum.Font.GothamBold
     autoTeleportButton.TextSize = 18
     autoTeleportButton.TextScaled = true
@@ -175,24 +148,24 @@ local function createMenu()
             autoTeleportButton.Text = "Turn Off"
             autoTeleportButton.BackgroundColor3 = Color3.fromRGB(139, 139, 0)  -- Amarelo escuro
         else
-            autoTeleportButton.Text = "Auto Teleport"
-            autoTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 139, 139)  -- Verde escuro
+            autoTeleportButton.Text = "AutoTeleport"
+            autoTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 139, 139)  -- Cor original
         end
     end)
 
-    -- Criar a slide de WalkSpeed
+    -- Criar o slider de WalkSpeed
     local walkSpeedSlider = Instance.new("Frame")
     walkSpeedSlider.Parent = frame
-    walkSpeedSlider.Size = UDim2.new(0.6, 0, 0, 10)  -- Ajustado para 60% da largura
-    walkSpeedSlider.Position = UDim2.new(0.5, -walkSpeedSlider.Size.X.Offset / 2, 0, 200)  -- Centralizado
+    walkSpeedSlider.Size = UDim2.new(0, 200, 0, 10)
+    walkSpeedSlider.Position = UDim2.new(0.5, -100, 0, 220)
     walkSpeedSlider.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     walkSpeedSlider.BorderSizePixel = 0
 
-    -- Criar o ponteiro do slider
+    -- Criar o ponteiro do slider (Visual)
     local sliderButton = Instance.new("TextButton")
     sliderButton.Parent = walkSpeedSlider
-    sliderButton.Size = UDim2.new(0, 30, 0, 30)
-    sliderButton.Position = UDim2.new(0, 0, 0, -10)
+    sliderButton.Size = UDim2.new(0, 20, 0, 20)
+    sliderButton.Position = UDim2.new(0, 0, 0, -5)  -- Inicialmente na posição mínima
     sliderButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
     sliderButton.Text = ""
     sliderButton.BorderSizePixel = 0
@@ -200,8 +173,8 @@ local function createMenu()
     -- Exibir a velocidade do WalkSpeed no menu
     local walkSpeedLabel = Instance.new("TextLabel")
     walkSpeedLabel.Parent = frame
-    walkSpeedLabel.Size = UDim2.new(0.6, 0, 0, 30)
-    walkSpeedLabel.Position = UDim2.new(0.5, -150, 0, 230)
+    walkSpeedLabel.Size = UDim2.new(0, 200, 0, 20)
+    walkSpeedLabel.Position = UDim2.new(0.5, -100, 0, 250)
     walkSpeedLabel.BackgroundTransparency = 1
     walkSpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     walkSpeedLabel.Text = "WalkSpeed: " .. walkSpeed
@@ -210,15 +183,17 @@ local function createMenu()
 
     -- Função para atualizar o WalkSpeed
     local function updateWalkSpeed()
-        player.Character.Humanoid.WalkSpeed = walkSpeed
-        walkSpeedLabel.Text = "WalkSpeed: " .. walkSpeed
+        if attacker and attacker:FindFirstChild("Humanoid") then
+            attacker.Humanoid.WalkSpeed = walkSpeed
+            walkSpeedLabel.Text = "WalkSpeed: " .. walkSpeed
+        end
     end
 
     -- Função para ajustar o WalkSpeed com o slider
     local dragging = false
 
     sliderButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
         end
     end)
@@ -230,18 +205,90 @@ local function createMenu()
             local offset = math.clamp(mouse.X - walkSpeedSlider.AbsolutePosition.X, 0, walkSpeedSlider.AbsoluteSize.X)
             local newWalkSpeed = math.floor(((offset / walkSpeedSlider.AbsoluteSize.X) * (516 - 16)) + 16)
             walkSpeed = math.clamp(newWalkSpeed, 16, 516)
-            sliderButton.Position = UDim2.new(0, offset, 0, -10)
+            sliderButton.Position = UDim2.new(0, offset, 0, -5)  -- Atualiza a posição do ponteiro visualmente
             updateWalkSpeed()
         end
     end)
 
     -- Interrompe o arraste do ponteiro ao soltar o botão do mouse
     sliderButton.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
+        end
+    end)
+
+    -- Função para garantir que o menu permaneça centralizado
+    local function centerMenu()
+        local screenSize = workspace.CurrentCamera.ViewportSize
+        local menuWidth = frame.Size.X.Offset
+        local menuHeight = frame.Size.Y.Offset
+        frame.Position = UDim2.new(0.5, -menuWidth / 2, 0.5, -menuHeight / 2)
+    end
+
+    -- Centraliza o menu ao ser criado e sempre que o tamanho da tela mudar
+    centerMenu()
+    game:GetService("Workspace").CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(centerMenu)
+
+    -- Função para alternar a visibilidade do menu com a tecla ALT DIREITO
+    game:GetService("UserInputService").InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.RightAlt then
+            menuVisible = not menuVisible  -- Alterna a visibilidade do menu
+            frame.Visible = menuVisible  -- Exibe ou oculta o menu
         end
     end)
 end
 
--- Cria o menu quando o jogo inicia
+-- Função para realizar o AutoFarm
+local function autoFarmMobs()
+    while true do
+        if autoFarmEnabled and mobs then
+            for i, mob in pairs(mobs:GetChildren()) do
+                local humanoid = mob:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    local mobPosition = mob.HumanoidRootPart.Position
+                    local attackerPosition = attacker.HumanoidRootPart.Position
+                    local distance = (mobPosition - attackerPosition).Magnitude
+
+                    if distance <= maxAttackDistance then
+                        -- Aqui você pode implementar o ataque
+                        humanoid.Health = 0  -- Exemplo de atacar o mob, matando-o imediatamente
+                    end
+                end
+            end
+        end
+        wait(0) -- Atraso para reduzir o uso de recursos
+    end
+end
+
+-- Função para teletransportar o jogador até o mob mais próximo
+local function autoTeleportToMob()
+    while true do
+        if autoTeleportEnabled and mobs then
+            local closestMob = nil
+            local closestDistance = maxAttackDistance
+            for i, mob in pairs(mobs:GetChildren()) do
+                local humanoid = mob:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    local mobPosition = mob.HumanoidRootPart.Position
+                    local attackerPosition = attacker.HumanoidRootPart.Position
+                    local distance = (mobPosition - attackerPosition).Magnitude
+
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestMob = mob
+                    end
+                end
+            end
+
+            if closestMob then
+                -- Teleportando o jogador até o mob mais próximo
+                attacker.HumanoidRootPart.CFrame = closestMob.HumanoidRootPart.CFrame
+            end
+        end
+        wait(0) -- Atraso para reduzir o uso de recursos
+    end
+end
+
 createMenu()
+autoFarmMobs()
+autoTeleportToMob()
