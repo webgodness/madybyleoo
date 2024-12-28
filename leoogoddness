@@ -1,11 +1,11 @@
 -- Variáveis do script
 local player = game.Players.LocalPlayer
 local attacker = player.Character
-local maxAttackDistance = 999  -- Raio de teleporte aumentado para 999
-local autoFarmEnabled = false
+local maxAttackDistance = 999  -- Raio de busca para mobs (pode ser ajustado conforme necessário)
+local autoFarmEnabled = false -- Flag para verificar se o AutoFarm está ativado
 local walkSpeed = 16 -- Velocidade inicial do personagem
-local speedEnabled = false -- Variável para verificar se a função de velocidade foi ativada
 local menuVisible = true -- Variável para controlar a visibilidade do menu
+local mobs = workspace.Objects:FindFirstChild("Mobs") -- Referência para os mobs (ajuste conforme necessário)
 
 -- Função para criar o Menu
 local function createMenu()
@@ -106,81 +106,39 @@ local function createMenu()
         end
     end)
 
-    -- Criar o botão de Velocidade
-    local speedButton = Instance.new("TextButton")
-    speedButton.Parent = frame
-    speedButton.Size = UDim2.new(0, 200, 0, 40)
-    speedButton.Position = UDim2.new(0.5, -100, 0, 140)
-    speedButton.BackgroundColor3 = Color3.fromRGB(0, 0, 139)  -- Azul escuro
-    speedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    speedButton.Text = "Velocidade"
-    speedButton.Font = Enum.Font.GothamBold
-    speedButton.TextSize = 18
-    speedButton.TextScaled = true
-    speedButton.BorderSizePixel = 0
-    speedButton.AnchorPoint = Vector2.new(0.5, 0.5)
-    speedButton.BackgroundTransparency = 0.3
-    speedButton.ClipsDescendants = true
-
-    -- Função para alternar a função de velocidade
-    speedButton.MouseButton1Click:Connect(function()
-        speedEnabled = not speedEnabled  -- Alterna o estado da função de velocidade
-
-        if speedEnabled then
-            speedButton.Text = "Desativar Veloc"
-            speedButton.BackgroundColor3 = Color3.fromRGB(139, 0, 0)  -- Vermelho escuro
-        else
-            speedButton.Text = "Velocidade"
-            speedButton.BackgroundColor3 = Color3.fromRGB(0, 0, 139)  -- Azul escuro
-        end
-    end)
-
-    -- Criar a barra deslizante para controlar a velocidade
-    local speedSlider = Instance.new("Frame")
-    speedSlider.Parent = frame
-    speedSlider.Size = UDim2.new(0, 200, 0, 10)
-    speedSlider.Position = UDim2.new(0.5, -100, 0, 210)
-    speedSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    speedSlider.BorderSizePixel = 0
-    speedSlider.ClipsDescendants = true
-
-    local speedBar = Instance.new("Frame")
-    speedBar.Parent = speedSlider
-    speedBar.Size = UDim2.new(walkSpeed / 516, 0, 1, 0)
-    speedBar.BackgroundColor3 = Color3.fromRGB(139, 0, 0)  -- Vermelho escuro
-
-    -- **Modificação**: Posicionar a Label da Velocidade centralizada na tela
-    local speedLabel = Instance.new("TextLabel")
-    speedLabel.Parent = frame
-    speedLabel.Size = UDim2.new(0, 200, 0, 40)
-    speedLabel.Position = UDim2.new(0.5, -100, 0, 250)
-    speedLabel.BackgroundTransparency = 1
-    speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    speedLabel.Text = "Velocidade: " .. walkSpeed
-    speedLabel.Font = Enum.Font.GothamBold
-    speedLabel.TextSize = 18
-    speedLabel.TextScaled = true
-
-    -- Função para alterar a velocidade
-    speedSlider.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 and speedEnabled then
-            local mousePos = input.Position.X - speedSlider.AbsolutePosition.X
-            local clampedValue = math.clamp(mousePos / speedSlider.AbsoluteSize.X, 0, 1)  -- Valor entre 0 e 1
-            walkSpeed = math.floor(clampedValue * 516)  -- A velocidade vai de 0 a 516
-            speedBar.Size = UDim2.new(clampedValue, 0, 1, 0)  -- Atualiza a barra
-            speedLabel.Text = "Velocidade: " .. walkSpeed  -- Atualiza o texto da velocidade
-            attacker.Humanoid.WalkSpeed = walkSpeed  -- Aplica a velocidade ao personagem
-        end
-    end)
-
-    -- Função para alternar a visibilidade do menu com a tecla Ctrl
+    -- Função para alternar a visibilidade do menu com a tecla ALT DIREITO
     game:GetService("UserInputService").InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.LeftControl then
+        if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.RightAlt then
             menuVisible = not menuVisible  -- Alterna a visibilidade do menu
             frame.Visible = menuVisible  -- Exibe ou oculta o menu
         end
     end)
 end
 
--- Criar o menu quando o jogo inicia
+-- Função para realizar o AutoFarm
+local function autoFarmMobs()
+    while true do
+        if autoFarmEnabled and mobs then
+            for i, mob in pairs(mobs:GetChildren()) do
+                local humanoid = mob:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    local mobPosition = mob.HumanoidRootPart.Position
+                    local attackerPosition = attacker.HumanoidRootPart.Position
+                    local distance = (mobPosition - attackerPosition).Magnitude
+
+                    if distance <= maxAttackDistance then
+                        -- Aqui você pode implementar o ataque
+                        humanoid.Health = 0  -- Exemplo de atacar o mob, matando-o imediatamente
+                    end
+                end
+            end
+        end
+        wait(0) -- Atraso para reduzir o uso de recursos
+    end
+end
+
+-- Cria o menu quando o jogo inicia
 createMenu()
+
+-- Começa o AutoFarm (a função só vai rodar se o AutoFarm estiver ativado)
+spawn(autoFarmMobs)
