@@ -156,7 +156,7 @@ local function createMenu()
     local walkSpeedLabel = Instance.new("TextLabel")
     walkSpeedLabel.Parent = frame
     walkSpeedLabel.Size = UDim2.new(0, 200, 0, 20)
-    walkSpeedLabel.Position = UDim2.new(0.5, -100, 0, 180)
+    walkSpeedLabel.Position = UDim2.new(0.5, -100, 0, 250)
     walkSpeedLabel.BackgroundTransparency = 1
     walkSpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     walkSpeedLabel.Text = "WalkSpeed: " .. walkSpeed
@@ -216,6 +216,57 @@ local function createMenu()
             frame.Visible = menuVisible  -- Exibe ou oculta o menu
         end
     end)
+end
+
+-- Função para realizar o AutoFarm
+local function autoFarmMobs()
+    while true do
+        if autoFarmEnabled and mobs then
+            for i, mob in pairs(mobs:GetChildren()) do
+                local humanoid = mob:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    local mobPosition = mob.HumanoidRootPart.Position
+                    local attackerPosition = attacker.HumanoidRootPart.Position
+                    local distance = (mobPosition - attackerPosition).Magnitude
+
+                    if distance <= maxAttackDistance then
+                        -- Aqui você pode implementar o ataque
+                        humanoid.Health = 0  -- Exemplo de atacar o mob, matando-o imediatamente
+                    end
+                end
+            end
+        end
+        wait(0) -- Atraso para reduzir o uso de recursos
+    end
+end
+
+-- Função para teletransportar o jogador até o mob mais próximo
+local function autoTeleportToMob()
+    while true do
+        if autoTeleportEnabled and mobs then
+            local closestMob = nil
+            local closestDistance = maxAttackDistance
+            for i, mob in pairs(mobs:GetChildren()) do
+                local humanoid = mob:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    local mobPosition = mob.HumanoidRootPart.Position
+                    local attackerPosition = attacker.HumanoidRootPart.Position
+                    local distance = (mobPosition - attackerPosition).Magnitude
+
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestMob = mob
+                    end
+                end
+            end
+
+            if closestMob then
+                -- Teleportando o jogador até o mob mais próximo
+                attacker.HumanoidRootPart.CFrame = closestMob.HumanoidRootPart.CFrame
+            end
+        end
+        wait(0) -- Atraso para reduzir o uso de recursos
+    end
 end
 
 -- Cria o menu quando o jogo inicia
