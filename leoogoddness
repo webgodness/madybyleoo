@@ -1,11 +1,12 @@
-
--- Variáveis do script
+-- Variáveis do script 
 local player = game.Players.LocalPlayer
 local mobs = workspace.Objects:FindFirstChild("Mobs")
-local attacker = player.Character
-local maxAttackDistance = 999
+local attacker = player.Character or player.CharacterAdded:Wait()
+local maxAttackDistance = 999  -- Raio de teleporte aumentado para 999
 local autoFarmEnabled = false
-local walkSpeed = 16 -- velocidade inicial do personagem
+local walkSpeed = 16 -- Velocidade inicial do personagem
+local speedEnabled = false -- Variável para verificar se a função de velocidade foi ativada
+local menuVisible = true -- Variável para controlar a visibilidade do menu
 
 -- Função para criar o Menu
 local function createMenu()
@@ -16,21 +17,32 @@ local function createMenu()
     -- Criar o frame maior
     local frame = Instance.new("Frame")
     frame.Parent = screenGui
-    frame.Size = UDim2.new(0, 200, 0, 250)  -- Tamanho do menu ajustado
+    frame.Size = UDim2.new(0, 520, 0, 520)  -- Tamanho do menu ajustado para 520x520
     frame.Position = UDim2.new(0, 10, 0, 10)
     frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     frame.BackgroundTransparency = 0.5
 
-    -- Adicionar a marca d'água "Made By Leoo" no topo do menu com o tamanho ajustado
+    -- Adicionar a marca d'água "Made By Leoo" no topo do menu
     local watermarkLabel = Instance.new("TextLabel")
     watermarkLabel.Parent = frame
-    watermarkLabel.Size = UDim2.new(0, 70, 0, 25)  -- Tamanho ajustado para 70x25
+    watermarkLabel.Size = UDim2.new(0, 70, 0, 25)  -- Tamanho ajustado
     watermarkLabel.Position = UDim2.new(0.5, -35, 0, 0)  -- Centralizado no topo
     watermarkLabel.BackgroundTransparency = 1
     watermarkLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     watermarkLabel.Text = "Made By Leoo"
     watermarkLabel.TextScaled = true
     watermarkLabel.TextTransparency = 0.5  -- Tornar o texto semi-transparente
+
+    -- Adicionar o link do Discord no centro inferior do menu
+    local discordLabel = Instance.new("TextLabel")
+    discordLabel.Parent = frame
+    discordLabel.Size = UDim2.new(0, 200, 0, 20)  -- Tamanho ajustado (200x20)
+    discordLabel.Position = UDim2.new(0.5, -100, 1, -30)  -- Centralizado no centro inferior
+    discordLabel.BackgroundTransparency = 1
+    discordLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    discordLabel.Text = "https://discord.gg/p4drBcNg3H"
+    discordLabel.TextScaled = true
+    discordLabel.TextSize = 12  -- Diminui o tamanho da letra
 
     -- Habilitar o movimento do frame
     local dragging = false
@@ -39,7 +51,6 @@ local function createMenu()
     -- Função para começar o arraste
     frame.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            -- Iniciar o arraste somente se clicar na parte do frame (não na barra de velocidade)
             dragging = true
             dragStart = input.Position
             startPos = frame.Position
@@ -64,11 +75,11 @@ local function createMenu()
     -- Criar o botão de AutoFarm
     local autoFarmButton = Instance.new("TextButton")
     autoFarmButton.Parent = frame
-    autoFarmButton.Size = UDim2.new(0, 80, 0, 30)  -- Tamanho do botão 80x30
+    autoFarmButton.Size = UDim2.new(0, 80, 0, 30)  -- Tamanho do botão ajustado
     autoFarmButton.Position = UDim2.new(0, 10, 0, 50)
-    autoFarmButton.BackgroundColor3 = Color3.fromRGB(128, 0, 128)  -- Cor roxa
+    autoFarmButton.BackgroundColor3 = Color3.fromRGB(0, 0, 139)  -- Azul escuro
     autoFarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    autoFarmButton.Text = "AutoFarm"
+    autoFarmButton.Text = "AutoFarm"  -- Renomeado para "AutoFarm"
 
     -- Função para alternar o AutoFarm
     autoFarmButton.MouseButton1Click:Connect(function()
@@ -76,43 +87,74 @@ local function createMenu()
 
         if autoFarmEnabled then
             autoFarmButton.Text = "Desativar"
-            autoFarmButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+            autoFarmButton.BackgroundColor3 = Color3.fromRGB(139, 0, 0)  -- Vermelho escuro
         else
-            autoFarmButton.Text = "Ativar"
-            autoFarmButton.BackgroundColor3 = Color3.fromRGB(128, 0, 128)  -- Cor roxa
+            autoFarmButton.Text = "AutoFarm"
+            autoFarmButton.BackgroundColor3 = Color3.fromRGB(0, 0, 139)  -- Azul escuro
+        end
+    end)
+
+    -- Criar o botão de Velocidade
+    local speedButton = Instance.new("TextButton")
+    speedButton.Parent = frame
+    speedButton.Size = UDim2.new(0, 80, 0, 30)  -- Tamanho do botão ajustado para 80x30
+    speedButton.Position = UDim2.new(0, 10, 0, 100)  -- Abaixo do botão AutoFarm
+    speedButton.BackgroundColor3 = Color3.fromRGB(0, 0, 139)  -- Azul escuro
+    speedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    speedButton.Text = "Velocidade"  -- Nome do botão
+
+    -- Função para alternar a função de velocidade
+    speedButton.MouseButton1Click:Connect(function()
+        speedEnabled = not speedEnabled  -- Alterna o estado da função de velocidade
+
+        if speedEnabled then
+            speedButton.Text = "Desativar Veloc"
+            speedButton.BackgroundColor3 = Color3.fromRGB(139, 0, 0)  -- Vermelho escuro
+        else
+            speedButton.Text = "Velocidade"
+            speedButton.BackgroundColor3 = Color3.fromRGB(0, 0, 139)  -- Azul escuro
         end
     end)
 
     -- Criar a barra deslizante para controlar a velocidade
     local speedSlider = Instance.new("Frame")
     speedSlider.Parent = frame
-    speedSlider.Size = UDim2.new(1, -20, 0.07, 0)  -- Barra bem menor (80x15)
-    speedSlider.Position = UDim2.new(0, 10, 0, 80)
+    speedSlider.Size = UDim2.new(0, 120, 0, 10)  -- Barra de 120x10
+    speedSlider.Position = UDim2.new(0, 330, 0, 50)  -- Barra de velocidade movida para a direita
     speedSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
     speedSlider.BorderSizePixel = 0
 
     local speedBar = Instance.new("Frame")
     speedBar.Parent = speedSlider
-    speedBar.Size = UDim2.new(walkSpeed / 256, 0, 1, 0)  -- Tamanho da barra baseado na velocidade
-    speedBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+    speedBar.Size = UDim2.new(walkSpeed / 516, 0, 1, 0)  -- Tamanho da barra baseado na velocidade
+    speedBar.BackgroundColor3 = Color3.fromRGB(139, 0, 0)  -- Vermelho escuro
 
+    -- **Modificação**: Posicionar a Label da Velocidade no Canto Superior Direito
     local speedLabel = Instance.new("TextLabel")
     speedLabel.Parent = frame
-    speedLabel.Size = UDim2.new(1, 0, 0.1, 0)
-    speedLabel.Position = UDim2.new(0, 0, 0.9, 0)
+    speedLabel.Size = UDim2.new(0, 150, 0, 30)  -- Tamanho ajustado para exibir a velocidade
+    speedLabel.Position = UDim2.new(1, -160, 0, 50)  -- Canto superior direito
     speedLabel.BackgroundTransparency = 1
     speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     speedLabel.Text = "Velocidade: " .. walkSpeed
 
     -- Função para alterar a velocidade
     speedSlider.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.MouseButton1 and speedEnabled then
             local mousePos = input.Position.X - speedSlider.AbsolutePosition.X
             local clampedValue = math.clamp(mousePos / speedSlider.AbsoluteSize.X, 0, 1)  -- Valor entre 0 e 1
-            walkSpeed = math.floor(clampedValue * 256)  -- A velocidade vai de 0 a 256
+            walkSpeed = math.floor(clampedValue * 516)  -- A velocidade vai de 0 a 516
             speedBar.Size = UDim2.new(clampedValue, 0, 1, 0)  -- Atualiza a barra
             speedLabel.Text = "Velocidade: " .. walkSpeed  -- Atualiza o texto da velocidade
             attacker.Humanoid.WalkSpeed = walkSpeed  -- Aplica a velocidade ao personagem
+        end
+    end)
+
+    -- Função para alternar a visibilidade do menu com a tecla Ctrl
+    game:GetService("UserInputService").InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.LeftControl then
+            menuVisible = not menuVisible  -- Alterna a visibilidade do menu
+            frame.Visible = menuVisible  -- Exibe ou oculta o menu
         end
     end)
 end
@@ -144,6 +186,10 @@ end
 local function autoFarm()
     while true do
         if autoFarmEnabled and mobs and attacker then
+            local closestMob = nil
+            local closestDistance = maxAttackDistance
+
+            -- Encontrar o mob mais próximo
             for _, mob in pairs(mobs:GetChildren()) do
                 local humanoid = mob:FindFirstChildOfClass("Humanoid")
                 if humanoid then
@@ -151,21 +197,28 @@ local function autoFarm()
                     local attackerPosition = attacker.HumanoidRootPart.Position
                     local distance = (mobPosition - attackerPosition).Magnitude
 
-                    if distance <= maxAttackDistance then
-                        humanoid.Health = 0 -- Atacar o mob
+                    if distance < closestDistance then
+                        closestDistance = distance
+                        closestMob = mob
                     end
                 end
             end
+
+            -- Teleportar o jogador para o mob mais próximo
+            if closestMob then
+                attacker:SetPrimaryPartCFrame(closestMob.HumanoidRootPart.CFrame)
+                local humanoid = closestMob:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    humanoid.Health = 0 -- Atacar o mob
+                end
+            end
         end
-        wait(0.5) -- Atraso para reduzir o uso de recursos
+        wait(0.1) -- Atraso otimizado para reduzir o uso de recursos
     end
 end
 
 -- Criar o menu quando o jogo inicia
 createMenu()
-
--- Criar o ESP de jogadores
-createESP()
 
 -- Começa o AutoFarm (a função só vai rodar se o AutoFarm estiver ativado)
 spawn(autoFarm)
