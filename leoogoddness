@@ -106,6 +106,68 @@ local function createMenu()
         end
     end)
 
+    -- Criar o slider de WalkSpeed
+    local walkSpeedSlider = Instance.new("Frame")
+    walkSpeedSlider.Parent = frame
+    walkSpeedSlider.Size = UDim2.new(0, 200, 0, 10)
+    walkSpeedSlider.Position = UDim2.new(0.5, -100, 0, 140)
+    walkSpeedSlider.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+    walkSpeedSlider.BorderSizePixel = 0
+
+    -- Criar o ponteiro do slider (Visual)
+    local sliderButton = Instance.new("TextButton")
+    sliderButton.Parent = walkSpeedSlider
+    sliderButton.Size = UDim2.new(0, 20, 0, 20)
+    sliderButton.Position = UDim2.new(0, 0, 0, -5)  -- Inicialmente na posição mínima
+    sliderButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
+    sliderButton.Text = ""
+    sliderButton.BorderSizePixel = 0
+
+    -- Exibir a velocidade do WalkSpeed no menu
+    local walkSpeedLabel = Instance.new("TextLabel")
+    walkSpeedLabel.Parent = frame
+    walkSpeedLabel.Size = UDim2.new(0, 200, 0, 20)
+    walkSpeedLabel.Position = UDim2.new(0.5, -100, 0, 170)
+    walkSpeedLabel.BackgroundTransparency = 1
+    walkSpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    walkSpeedLabel.Text = "WalkSpeed: " .. walkSpeed
+    walkSpeedLabel.TextScaled = true
+    walkSpeedLabel.Font = Enum.Font.Gotham
+
+    -- Função para atualizar o WalkSpeed
+    local function updateWalkSpeed()
+        player.Character.Humanoid.WalkSpeed = walkSpeed
+        walkSpeedLabel.Text = "WalkSpeed: " .. walkSpeed
+    end
+
+    -- Função para ajustar o WalkSpeed com o slider
+    local dragging = false
+
+    sliderButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = true
+        end
+    end)
+
+    -- Atualiza o WalkSpeed enquanto o botão do slider é arrastado
+    walkSpeedSlider.InputChanged:Connect(function(input)
+        if dragging then
+            local mouse = player:GetMouse()
+            local offset = math.clamp(mouse.X - walkSpeedSlider.AbsolutePosition.X, 0, walkSpeedSlider.AbsoluteSize.X)
+            local newWalkSpeed = math.floor(((offset / walkSpeedSlider.AbsoluteSize.X) * (516 - 16)) + 16)
+            walkSpeed = math.clamp(newWalkSpeed, 16, 516)
+            sliderButton.Position = UDim2.new(0, offset, 0, -5)  -- Atualiza a posição do ponteiro visualmente
+            updateWalkSpeed()
+        end
+    end)
+
+    -- Interrompe o arraste do ponteiro ao soltar o botão do mouse
+    sliderButton.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
     -- Função para alternar a visibilidade do menu com a tecla ALT DIREITO
     game:GetService("UserInputService").InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.RightAlt then
