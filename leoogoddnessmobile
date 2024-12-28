@@ -17,8 +17,8 @@ local function createMenu()
     -- Criar o frame maior
     local frame = Instance.new("Frame")
     frame.Parent = screenGui
-    frame.Size = UDim2.new(0.6, 0, 0.5, 0)  -- Reduzido para 60% da largura e 50% da altura da tela
-    frame.Position = UDim2.new(0.5, -frame.Size.X.Offset / 2, 0.5, -frame.Size.Y.Offset / 2)  -- Centralizado na tela
+    frame.Size = UDim2.new(0, 550, 0, 550)  -- Tamanho do menu 550x550
+    frame.Position = UDim2.new(0.5, -275, 0.5, -275)  -- Centralizado na tela (550/2 = 275)
     frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)  -- Fundo escuro (cinza)
     frame.BorderSizePixel = 0
     frame.AnchorPoint = Vector2.new(0.5, 0.5)  -- Centraliza no meio da tela
@@ -99,8 +99,8 @@ local function createMenu()
     -- Criar o botão de AutoFarm
     local autoFarmButton = Instance.new("TextButton")
     autoFarmButton.Parent = frame
-    autoFarmButton.Size = UDim2.new(0.8, 0, 0, 40)  -- Ajustado para 80% da largura
-    autoFarmButton.Position = UDim2.new(0.5, -100, 0, 80)
+    autoFarmButton.Size = UDim2.new(0, 140, 0, 40)  -- Ajustado para 140x40
+    autoFarmButton.Position = UDim2.new(0.5, -70, 0, 80)  -- Centralizado
     autoFarmButton.BackgroundColor3 = Color3.fromRGB(0, 0, 139)  -- Azul escuro
     autoFarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     autoFarmButton.Text = "AutoFarm"
@@ -128,8 +128,8 @@ local function createMenu()
     -- Criar o botão de Auto Teleport
     local autoTeleportButton = Instance.new("TextButton")
     autoTeleportButton.Parent = frame
-    autoTeleportButton.Size = UDim2.new(0.8, 0, 0, 40)  -- Ajustado para 80% da largura
-    autoTeleportButton.Position = UDim2.new(0.5, -100, 0, 140)
+    autoTeleportButton.Size = UDim2.new(0, 140, 0, 40)  -- Ajustado para 140x40
+    autoTeleportButton.Position = UDim2.new(0.5, -70, 0, 140)  -- Centralizado
     autoTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 139, 139)  -- Verde escuro
     autoTeleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     autoTeleportButton.Text = "Auto Teleport"
@@ -154,19 +154,19 @@ local function createMenu()
         end
     end)
 
-    -- Criar o slider de WalkSpeed
+    -- Criar a slide de WalkSpeed
     local walkSpeedSlider = Instance.new("Frame")
     walkSpeedSlider.Parent = frame
-    walkSpeedSlider.Size = UDim2.new(0.8, 0, 0, 10)  -- Ajustado para 80% da largura
-    walkSpeedSlider.Position = UDim2.new(0.5, -100, 0, 200)
+    walkSpeedSlider.Size = UDim2.new(0.6, 0, 0, 10)  -- Ajustado para 60% da largura
+    walkSpeedSlider.Position = UDim2.new(0.5, -walkSpeedSlider.Size.X.Offset / 2, 0, 200)  -- Centralizado
     walkSpeedSlider.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     walkSpeedSlider.BorderSizePixel = 0
 
-    -- Criar o ponteiro do slider (Visual)
+    -- Criar o ponteiro do slider
     local sliderButton = Instance.new("TextButton")
     sliderButton.Parent = walkSpeedSlider
-    sliderButton.Size = UDim2.new(0, 30, 0, 30)  -- Tamanho ajustado
-    sliderButton.Position = UDim2.new(0, 0, 0, -10)  -- Inicialmente na posição mínima
+    sliderButton.Size = UDim2.new(0, 30, 0, 30)
+    sliderButton.Position = UDim2.new(0, 0, 0, -10)
     sliderButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
     sliderButton.Text = ""
     sliderButton.BorderSizePixel = 0
@@ -174,7 +174,7 @@ local function createMenu()
     -- Exibir a velocidade do WalkSpeed no menu
     local walkSpeedLabel = Instance.new("TextLabel")
     walkSpeedLabel.Parent = frame
-    walkSpeedLabel.Size = UDim2.new(0.8, 0, 0, 30)  -- Ajustado para 80% da largura
+    walkSpeedLabel.Size = UDim2.new(0.6, 0, 0, 30)
     walkSpeedLabel.Position = UDim2.new(0.5, -150, 0, 230)
     walkSpeedLabel.BackgroundTransparency = 1
     walkSpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -204,7 +204,7 @@ local function createMenu()
             local offset = math.clamp(mouse.X - walkSpeedSlider.AbsolutePosition.X, 0, walkSpeedSlider.AbsoluteSize.X)
             local newWalkSpeed = math.floor(((offset / walkSpeedSlider.AbsoluteSize.X) * (516 - 16)) + 16)
             walkSpeed = math.clamp(newWalkSpeed, 16, 516)
-            sliderButton.Position = UDim2.new(0, offset, 0, -10)  -- Atualiza a posição do ponteiro visualmente
+            sliderButton.Position = UDim2.new(0, offset, 0, -10)
             updateWalkSpeed()
         end
     end)
@@ -215,81 +215,6 @@ local function createMenu()
             dragging = false
         end
     end)
-
-    -- Variáveis para o arraste do menu
-    local draggingFrame = false
-    local dragStart = nil
-    local startPos = nil
-
-    frame.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            draggingFrame = true
-            dragStart = input.Position
-            startPos = frame.Position
-        end
-    end)
-
-    frame.InputChanged:Connect(function(input)
-        if draggingFrame and input.UserInputType == Enum.UserInputType.Touch then
-            local delta = input.Position - dragStart
-            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        end
-    end)
-
-    frame.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Touch then
-            draggingFrame = false
-        end
-    end)
-end
-
--- Função para realizar o AutoFarm com teletransporte
-local function autoFarmMobs()
-    while true do
-        if autoFarmEnabled and mobs then
-            for _, mob in pairs(mobs:GetChildren()) do
-                -- Verifica se o mob tem um humanoide
-                local humanoid = mob:FindFirstChildOfClass("Humanoid")
-                
-                -- Se o mob tem humanoide e está dentro do alcance
-                if humanoid then
-                    local mobPosition = mob.HumanoidRootPart.Position
-                    local attackerPosition = attacker.HumanoidRootPart.Position
-                    local distance = (mobPosition - attackerPosition).Magnitude  -- Calcula a distância
-                    
-                    -- Verifica se está dentro do alcance para atacar
-                    if distance <= maxAttackDistance then
-                        -- Teleporta o jogador para o mob
-                        attacker.HumanoidRootPart.CFrame = CFrame.new(mobPosition)
-                        -- Mata o mob
-                        humanoid.Health = 0
-                    end
-                end
-            end
-        end
-        wait(1) -- Atraso para reduzir o uso de recursos
-    end
-end
-
--- Função para realizar o AutoTeleport
-local function autoTeleport()
-    while true do
-        if autoTeleportEnabled and mobs then
-            for _, mob in pairs(mobs:GetChildren()) do
-                local humanoid = mob:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    local mobPosition = mob.HumanoidRootPart.Position
-                    local attackerPosition = attacker.HumanoidRootPart.Position
-                    local distance = (mobPosition - attackerPosition).Magnitude
-                    -- Verifica se o mob está dentro do alcance para teletransportar
-                    if distance <= maxAttackDistance then
-                        attacker.HumanoidRootPart.CFrame = CFrame.new(mobPosition)  -- Teleporta para o mob
-                    end
-                end
-            end
-        end
-        wait(1)  -- Atraso para reduzir o uso de recursos
-    end
 end
 
 -- Cria o menu quando o jogo inicia
