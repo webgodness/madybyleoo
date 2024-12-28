@@ -3,6 +3,7 @@ local player = game.Players.LocalPlayer
 local attacker = player.Character
 local maxAttackDistance = 999  -- Raio de busca para mobs (pode ser ajustado conforme necessário)
 local autoFarmEnabled = false -- Flag para verificar se o AutoFarm está ativado
+local autoTeleportEnabled = false -- Flag para verificar se o AutoTeleport está ativado
 local walkSpeed = 16 -- Velocidade inicial do personagem
 local menuVisible = true -- Variável para controlar a visibilidade do menu
 local mobs = workspace.Objects:FindFirstChild("Mobs") -- Referência para os mobs (ajuste conforme necessário)
@@ -13,11 +14,10 @@ local function createMenu()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Parent = player:WaitForChild("PlayerGui")
 
-    -- Criar o frame maior
+    -- Criar o frame maior com tamanho ajustado para 500x550
     local frame = Instance.new("Frame")
     frame.Parent = screenGui
-    frame.Size = UDim2.new(0, 520, 0, 520)  -- Tamanho do menu ajustado
-    frame.Position = UDim2.new(0.5, -260, 0.5, -260)  -- Centralizado na tela
+    frame.Size = UDim2.new(0, 500, 0, 550)  -- Tamanho ajustado para 500x550
     frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)  -- Fundo escuro (cinza)
     frame.BorderSizePixel = 0
     frame.AnchorPoint = Vector2.new(0.5, 0.5)  -- Centralizar no meio da tela
@@ -56,7 +56,7 @@ local function createMenu()
     local watermarkLabel = Instance.new("TextLabel")
     watermarkLabel.Parent = frame
     watermarkLabel.Size = UDim2.new(0, 200, 0, 30)
-    watermarkLabel.Position = UDim2.new(0.5, -100, 0, 20)
+    watermarkLabel.Position = UDim2.new(0.5, -100, 0, 10)
     watermarkLabel.BackgroundTransparency = 1
     watermarkLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     watermarkLabel.Text = "Made By Leoo"
@@ -80,8 +80,8 @@ local function createMenu()
     -- Criar o botão de AutoFarm
     local autoFarmButton = Instance.new("TextButton")
     autoFarmButton.Parent = frame
-    autoFarmButton.Size = UDim2.new(0, 200, 0, 40)  -- Tamanho maior para o botão
-    autoFarmButton.Position = UDim2.new(0.5, -100, 0, 80)
+    autoFarmButton.Size = UDim2.new(0, 200, 0, 40)  -- Tamanho ajustado
+    autoFarmButton.Position = UDim2.new(0.5, -110, 0, 80)  -- Ajustado para o centro horizontal
     autoFarmButton.BackgroundColor3 = Color3.fromRGB(0, 0, 139)  -- Azul escuro
     autoFarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     autoFarmButton.Text = "AutoFarm"
@@ -106,11 +106,40 @@ local function createMenu()
         end
     end)
 
+    -- Criar o botão de AutoTeleport
+    local autoTeleportButton = Instance.new("TextButton")
+    autoTeleportButton.Parent = frame
+    autoTeleportButton.Size = UDim2.new(0, 200, 0, 40)  -- Tamanho ajustado
+    autoTeleportButton.Position = UDim2.new(0.5, -110, 0, 140)  -- Ajustado para o centro horizontal, abaixo do AutoFarm
+    autoTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 139, 139)  -- Cor do botão de teleport
+    autoTeleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    autoTeleportButton.Text = "AutoTeleport"
+    autoTeleportButton.Font = Enum.Font.GothamBold
+    autoTeleportButton.TextSize = 18
+    autoTeleportButton.TextScaled = true
+    autoTeleportButton.BorderSizePixel = 0
+    autoTeleportButton.AnchorPoint = Vector2.new(0.5, 0.5)
+    autoTeleportButton.BackgroundTransparency = 0.3  -- Transparência suave
+    autoTeleportButton.ClipsDescendants = true
+
+    -- Função para alternar o AutoTeleport
+    autoTeleportButton.MouseButton1Click:Connect(function()
+        autoTeleportEnabled = not autoTeleportEnabled
+
+        if autoTeleportEnabled then
+            autoTeleportButton.Text = "Turn Off"
+            autoTeleportButton.BackgroundColor3 = Color3.fromRGB(139, 139, 0)  -- Amarelo escuro
+        else
+            autoTeleportButton.Text = "AutoTeleport"
+            autoTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 139, 139)  -- Cor original
+        end
+    end)
+
     -- Criar o slider de WalkSpeed
     local walkSpeedSlider = Instance.new("Frame")
     walkSpeedSlider.Parent = frame
     walkSpeedSlider.Size = UDim2.new(0, 200, 0, 10)
-    walkSpeedSlider.Position = UDim2.new(0.5, -100, 0, 140)
+    walkSpeedSlider.Position = UDim2.new(0.5, -100, 0, 220)
     walkSpeedSlider.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     walkSpeedSlider.BorderSizePixel = 0
 
@@ -127,7 +156,7 @@ local function createMenu()
     local walkSpeedLabel = Instance.new("TextLabel")
     walkSpeedLabel.Parent = frame
     walkSpeedLabel.Size = UDim2.new(0, 200, 0, 20)
-    walkSpeedLabel.Position = UDim2.new(0.5, -100, 0, 170)
+    walkSpeedLabel.Position = UDim2.new(0.5, -100, 0, 180)
     walkSpeedLabel.BackgroundTransparency = 1
     walkSpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     walkSpeedLabel.Text = "WalkSpeed: " .. walkSpeed
@@ -168,6 +197,18 @@ local function createMenu()
         end
     end)
 
+    -- Função para garantir que o menu permaneça centralizado
+    local function centerMenu()
+        local screenSize = workspace.CurrentCamera.ViewportSize
+        local menuWidth = frame.Size.X.Offset
+        local menuHeight = frame.Size.Y.Offset
+        frame.Position = UDim2.new(0.5, -menuWidth / 2, 0.5, -menuHeight / 2)
+    end
+
+    -- Centraliza o menu ao ser criado e sempre que o tamanho da tela mudar
+    centerMenu()
+    game:GetService("Workspace").CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(centerMenu)
+
     -- Função para alternar a visibilidade do menu com a tecla ALT DIREITO
     game:GetService("UserInputService").InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.RightAlt then
@@ -177,30 +218,9 @@ local function createMenu()
     end)
 end
 
--- Função para realizar o AutoFarm
-local function autoFarmMobs()
-    while true do
-        if autoFarmEnabled and mobs then
-            for i, mob in pairs(mobs:GetChildren()) do
-                local humanoid = mob:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    local mobPosition = mob.HumanoidRootPart.Position
-                    local attackerPosition = attacker.HumanoidRootPart.Position
-                    local distance = (mobPosition - attackerPosition).Magnitude
-
-                    if distance <= maxAttackDistance then
-                        -- Aqui você pode implementar o ataque
-                        humanoid.Health = 0  -- Exemplo de atacar o mob, matando-o imediatamente
-                    end
-                end
-            end
-        end
-        wait(0) -- Atraso para reduzir o uso de recursos
-    end
-end
-
 -- Cria o menu quando o jogo inicia
 createMenu()
 
--- Começa o AutoFarm (a função só vai rodar se o AutoFarm estiver ativado)
+-- Começa o AutoFarm e o AutoTeleport
 spawn(autoFarmMobs)
+spawn(autoTeleportToMob)
