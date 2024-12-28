@@ -14,16 +14,42 @@ local function createMenu()
     local screenGui = Instance.new("ScreenGui")
     screenGui.Parent = player:WaitForChild("PlayerGui")
 
-    -- Criar o frame maior
+    -- Criar o frame do menu
     local frame = Instance.new("Frame")
     frame.Parent = screenGui
-    frame.Size = UDim2.new(0, 550, 0, 550)  -- Tamanho do menu 550x550
-    frame.Position = UDim2.new(0.5, -275, 0.5, -275)  -- Centralizado na tela (550/2 = 275)
+    frame.Size = UDim2.new(0, 425, 0, 420)  -- Tamanho do menu 425x420
+    frame.Position = UDim2.new(0.5, -212, 0.5, -210)  -- Centralizado na tela (425/2 = 212)
     frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)  -- Fundo escuro (cinza)
     frame.BorderSizePixel = 0
     frame.AnchorPoint = Vector2.new(0.5, 0.5)  -- Centraliza no meio da tela
     frame.BackgroundTransparency = 0.3  -- Transparência suave para um efeito de sombra
     frame.ClipsDescendants = true  -- Para que os filhos do frame não saiam dos limites
+
+    -- Função para permitir que o menu seja movido
+    local draggingFrame = false
+    local dragStart = nil
+    local startPos = nil
+
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            draggingFrame = true
+            dragStart = input.Position
+            startPos = frame.Position
+        end
+    end)
+
+    frame.InputChanged:Connect(function(input)
+        if draggingFrame and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+
+    frame.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            draggingFrame = false
+        end
+    end)
 
     -- Criar o botão "X" para fechar o menu no canto superior direito
     local closeButton = Instance.new("TextButton")
@@ -141,7 +167,7 @@ local function createMenu()
     autoTeleportButton.BackgroundTransparency = 0.3  -- Transparência suave
     autoTeleportButton.ClipsDescendants = true
 
-    -- Função para alternar o Auto Teleport
+    -- Função para alternar o AutoTeleport
     autoTeleportButton.MouseButton1Click:Connect(function()
         autoTeleportEnabled = not autoTeleportEnabled
 
@@ -219,9 +245,3 @@ end
 
 -- Cria o menu quando o jogo inicia
 createMenu()
-
--- Começa o AutoFarm (a função só vai rodar se o AutoFarm estiver ativado)
-spawn(autoFarmMobs)
-
--- Começa o AutoTeleport (a função só vai rodar se o AutoTeleport estiver ativado)
-spawn(autoTeleport)
