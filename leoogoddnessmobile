@@ -16,24 +16,24 @@ local function createMenu()
     -- Criar o frame maior
     local frame = Instance.new("Frame")
     frame.Parent = screenGui
-    frame.Size = UDim2.new(0.8, 0, 0.8, 0)  -- Ajusta a largura para 80% e a altura para 80% da tela
-    frame.Position = UDim2.new(0.5, -200, 0.5, -225)  -- Centralizado na tela
+    frame.Size = UDim2.new(0.6, 0, 0.5, 0)  -- Reduzido para 60% da largura e 50% da altura da tela
+    frame.Position = UDim2.new(0.5, -frame.Size.X.Offset / 2, 0.5, -frame.Size.Y.Offset / 2)  -- Centralizado na tela
     frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)  -- Fundo escuro (cinza)
     frame.BorderSizePixel = 0
-    frame.AnchorPoint = Vector2.new(0.5, 0.5)  -- Centralizar no meio da tela
+    frame.AnchorPoint = Vector2.new(0.5, 0.5)  -- Centraliza no meio da tela
     frame.BackgroundTransparency = 0.3  -- Transparência suave para um efeito de sombra
     frame.ClipsDescendants = true  -- Para que os filhos do frame não saiam dos limites
 
     -- Criar o botão "X" para fechar o menu no canto superior direito
     local closeButton = Instance.new("TextButton")
     closeButton.Parent = frame
-    closeButton.Size = UDim2.new(0, 40, 0, 40)
+    closeButton.Size = UDim2.new(0, 30, 0, 30)
     closeButton.Position = UDim2.new(1, -10, 0, 10)  -- Posição no canto superior direito
     closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)  -- Cor vermelha
     closeButton.Text = "X"
     closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     closeButton.Font = Enum.Font.GothamBold
-    closeButton.TextSize = 24
+    closeButton.TextSize = 18
     closeButton.TextScaled = true
     closeButton.BorderSizePixel = 0
     closeButton.AnchorPoint = Vector2.new(1, 0)
@@ -73,8 +73,8 @@ local function createMenu()
     -- Adicionar a marca d'água "Made By Leoo" no topo do menu
     local watermarkLabel = Instance.new("TextLabel")
     watermarkLabel.Parent = frame
-    watermarkLabel.Size = UDim2.new(0.6, 0, 0, 30)  -- Ajustado para 60% da largura
-    watermarkLabel.Position = UDim2.new(0.5, -100, 0, 20)
+    watermarkLabel.Size = UDim2.new(0.8, 0, 0, 30)  -- Ajustado para 80% da largura
+    watermarkLabel.Position = UDim2.new(0.5, -150, 0, 20)
     watermarkLabel.BackgroundTransparency = 1
     watermarkLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     watermarkLabel.Text = "Made By Leoo"
@@ -86,8 +86,8 @@ local function createMenu()
     -- Adicionar o link do Discord no centro inferior do menu
     local discordLabel = Instance.new("TextLabel")
     discordLabel.Parent = frame
-    discordLabel.Size = UDim2.new(0.6, 0, 0, 20)  -- Ajustado para 60% da largura
-    discordLabel.Position = UDim2.new(0.5, -100, 1, -30)
+    discordLabel.Size = UDim2.new(0.8, 0, 0, 20)  -- Ajustado para 80% da largura
+    discordLabel.Position = UDim2.new(0.5, -150, 1, -30)
     discordLabel.BackgroundTransparency = 1
     discordLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     discordLabel.Text = "https://discord.gg/p4drBcNg3H"
@@ -98,7 +98,7 @@ local function createMenu()
     -- Criar o botão de AutoFarm
     local autoFarmButton = Instance.new("TextButton")
     autoFarmButton.Parent = frame
-    autoFarmButton.Size = UDim2.new(0.8, 0, 0, 50)  -- Ajustado para 80% da largura
+    autoFarmButton.Size = UDim2.new(0.8, 0, 0, 40)  -- Ajustado para 80% da largura
     autoFarmButton.Position = UDim2.new(0.5, -100, 0, 80)
     autoFarmButton.BackgroundColor3 = Color3.fromRGB(0, 0, 139)  -- Azul escuro
     autoFarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -185,32 +185,33 @@ local function createMenu()
             dragging = false
         end
     end)
-end
 
--- Função para realizar o AutoFarm
-local function autoFarmMobs()
-    while true do
-        if autoFarmEnabled and mobs then
-            for i, mob in pairs(mobs:GetChildren()) do
-                local humanoid = mob:FindFirstChildOfClass("Humanoid")
-                if humanoid then
-                    local mobPosition = mob.HumanoidRootPart.Position
-                    local attackerPosition = attacker.HumanoidRootPart.Position
-                    local distance = (mobPosition - attackerPosition).Magnitude
+    -- Variáveis para o arraste do menu
+    local draggingFrame = false
+    local dragStart = nil
+    local startPos = nil
 
-                    if distance <= maxAttackDistance then
-                        -- Aqui você pode implementar o ataque
-                        humanoid.Health = 0  -- Exemplo de atacar o mob, matando-o imediatamente
-                    end
-                end
-            end
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            draggingFrame = true
+            dragStart = input.Position
+            startPos = frame.Position
         end
-        wait(0) -- Atraso para reduzir o uso de recursos
-    end
+    end)
+
+    frame.InputChanged:Connect(function(input)
+        if draggingFrame and input.UserInputType == Enum.UserInputType.Touch then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+
+    frame.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            draggingFrame = false
+        end
+    end)
 end
 
 -- Cria o menu quando o jogo inicia
 createMenu()
-
--- Começa o AutoFarm (a função só vai rodar se o AutoFarm estiver ativado)
-spawn(autoFarmMobs)
