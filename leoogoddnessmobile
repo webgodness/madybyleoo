@@ -3,6 +3,7 @@ local player = game.Players.LocalPlayer
 local attacker = player.Character
 local maxAttackDistance = 999  -- Raio de busca para mobs (pode ser ajustado conforme necessário)
 local autoFarmEnabled = false -- Flag para verificar se o AutoFarm está ativado
+local autoTeleportEnabled = false -- Flag para verificar se o AutoTeleport está ativado
 local walkSpeed = 16 -- Velocidade inicial do personagem
 local menuVisible = true -- Variável para controlar a visibilidade do menu
 local mobs = workspace.Objects:FindFirstChild("Mobs") -- Referência para os mobs (ajuste conforme necessário)
@@ -124,11 +125,40 @@ local function createMenu()
         end
     end)
 
+    -- Criar o botão de Auto Teleport
+    local autoTeleportButton = Instance.new("TextButton")
+    autoTeleportButton.Parent = frame
+    autoTeleportButton.Size = UDim2.new(0.8, 0, 0, 40)  -- Ajustado para 80% da largura
+    autoTeleportButton.Position = UDim2.new(0.5, -100, 0, 140)
+    autoTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 139, 139)  -- Verde escuro
+    autoTeleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    autoTeleportButton.Text = "Auto Teleport"
+    autoTeleportButton.Font = Enum.Font.GothamBold
+    autoTeleportButton.TextSize = 18
+    autoTeleportButton.TextScaled = true
+    autoTeleportButton.BorderSizePixel = 0
+    autoTeleportButton.AnchorPoint = Vector2.new(0.5, 0.5)
+    autoTeleportButton.BackgroundTransparency = 0.3  -- Transparência suave
+    autoTeleportButton.ClipsDescendants = true
+
+    -- Função para alternar o Auto Teleport
+    autoTeleportButton.MouseButton1Click:Connect(function()
+        autoTeleportEnabled = not autoTeleportEnabled
+
+        if autoTeleportEnabled then
+            autoTeleportButton.Text = "Turn Off"
+            autoTeleportButton.BackgroundColor3 = Color3.fromRGB(139, 139, 0)  -- Amarelo escuro
+        else
+            autoTeleportButton.Text = "Auto Teleport"
+            autoTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 139, 139)  -- Verde escuro
+        end
+    end)
+
     -- Criar o slider de WalkSpeed
     local walkSpeedSlider = Instance.new("Frame")
     walkSpeedSlider.Parent = frame
     walkSpeedSlider.Size = UDim2.new(0.8, 0, 0, 10)  -- Ajustado para 80% da largura
-    walkSpeedSlider.Position = UDim2.new(0.5, -100, 0, 140)
+    walkSpeedSlider.Position = UDim2.new(0.5, -100, 0, 200)
     walkSpeedSlider.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     walkSpeedSlider.BorderSizePixel = 0
 
@@ -145,7 +175,7 @@ local function createMenu()
     local walkSpeedLabel = Instance.new("TextLabel")
     walkSpeedLabel.Parent = frame
     walkSpeedLabel.Size = UDim2.new(0.8, 0, 0, 30)  -- Ajustado para 80% da largura
-    walkSpeedLabel.Position = UDim2.new(0.5, -100, 0, 170)
+    walkSpeedLabel.Position = UDim2.new(0.5, -150, 0, 230)
     walkSpeedLabel.BackgroundTransparency = 1
     walkSpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     walkSpeedLabel.Text = "WalkSpeed: " .. walkSpeed
@@ -162,7 +192,7 @@ local function createMenu()
     local dragging = false
 
     sliderButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
         end
     end)
@@ -181,7 +211,7 @@ local function createMenu()
 
     -- Interrompe o arraste do ponteiro ao soltar o botão do mouse
     sliderButton.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
         end
     end)
@@ -213,5 +243,60 @@ local function createMenu()
     end)
 end
 
+-- Função para realizar o AutoFarm com teletransporte
+local function autoFarmMobs()
+    while true do
+        if autoFarmEnabled and mobs then
+            for _, mob in pairs(mobs:GetChildren()) do
+                -- Verifica se o mob tem um humanoide
+                local humanoid = mob:FindFirstChildOfClass("Humanoid")
+                
+                -- Se o mob tem humanoide e está dentro do alcance
+                if humanoid then
+                    local mobPosition = mob.HumanoidRootPart.Position
+                    local attackerPosition = attacker.HumanoidRootPart.Position
+                    local distance = (mobPosition - attackerPosition).Magnitude  -- Calcula a distância
+                    
+                    -- Verifica se está dentro do alcance para atacar
+                    if distance <= maxAttackDistance then
+                        -- Teleporta o jogador para o mob
+                        attacker.HumanoidRootPart.CFrame = CFrame.new(mobPosition)
+                        -- Mata o mob
+                        humanoid.Health = 0
+                    end
+                end
+            end
+        end
+        wait(1) -- Atraso para reduzir o uso de recursos
+    end
+end
+
+-- Função para realizar o AutoTeleport
+local function autoTeleport()
+    while true do
+        if autoTeleportEnabled and mobs then
+            for _, mob in pairs(mobs:GetChildren()) do
+                local humanoid = mob:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    local mobPosition = mob.HumanoidRootPart.Position
+                    local attackerPosition = attacker.HumanoidRootPart.Position
+                    local distance = (mobPosition - attackerPosition).Magnitude
+                    -- Verifica se o mob está dentro do alcance para teletransportar
+                    if distance <= maxAttackDistance then
+                        attacker.HumanoidRootPart.CFrame = CFrame.new(mobPosition)  -- Teleporta para o mob
+                    end
+                end
+            end
+        end
+        wait(1)  -- Atraso para reduzir o uso de recursos
+    end
+end
+
 -- Cria o menu quando o jogo inicia
 createMenu()
+
+-- Começa o AutoFarm (a função só vai rodar se o AutoFarm estiver ativado)
+spawn(autoFarmMobs)
+
+-- Começa o AutoTeleport (a função só vai rodar se o AutoTeleport estiver ativado)
+spawn(autoTeleport)
