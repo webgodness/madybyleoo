@@ -1,0 +1,171 @@
+
+-- Variáveis do script
+local player = game.Players.LocalPlayer
+local mobs = workspace.Objects:FindFirstChild("Mobs")
+local attacker = player.Character
+local maxAttackDistance = 999
+local autoFarmEnabled = false
+local walkSpeed = 16 -- velocidade inicial do personagem
+
+-- Função para criar o Menu
+local function createMenu()
+    -- Criar a GUI
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Parent = player:WaitForChild("PlayerGui")
+
+    -- Criar o frame maior
+    local frame = Instance.new("Frame")
+    frame.Parent = screenGui
+    frame.Size = UDim2.new(0, 200, 0, 250)  -- Tamanho do menu ajustado
+    frame.Position = UDim2.new(0, 10, 0, 10)
+    frame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    frame.BackgroundTransparency = 0.5
+
+    -- Adicionar a marca d'água "Made By Leoo" no topo do menu com o tamanho ajustado
+    local watermarkLabel = Instance.new("TextLabel")
+    watermarkLabel.Parent = frame
+    watermarkLabel.Size = UDim2.new(0, 70, 0, 25)  -- Tamanho ajustado para 70x25
+    watermarkLabel.Position = UDim2.new(0.5, -35, 0, 0)  -- Centralizado no topo
+    watermarkLabel.BackgroundTransparency = 1
+    watermarkLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    watermarkLabel.Text = "Made By Leoo"
+    watermarkLabel.TextScaled = true
+    watermarkLabel.TextTransparency = 0.5  -- Tornar o texto semi-transparente
+
+    -- Habilitar o movimento do frame
+    local dragging = false
+    local dragInput, dragStart, startPos
+
+    -- Função para começar o arraste
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            -- Iniciar o arraste somente se clicar na parte do frame (não na barra de velocidade)
+            dragging = true
+            dragStart = input.Position
+            startPos = frame.Position
+        end
+    end)
+
+    -- Função para realizar o arraste
+    frame.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end)
+
+    -- Função para parar o arraste
+    frame.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
+    end)
+
+    -- Criar o botão de AutoFarm
+    local autoFarmButton = Instance.new("TextButton")
+    autoFarmButton.Parent = frame
+    autoFarmButton.Size = UDim2.new(0, 80, 0, 30)  -- Tamanho do botão 80x30
+    autoFarmButton.Position = UDim2.new(0, 10, 0, 50)
+    autoFarmButton.BackgroundColor3 = Color3.fromRGB(128, 0, 128)  -- Cor roxa
+    autoFarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    autoFarmButton.Text = "AutoFarm"
+
+    -- Função para alternar o AutoFarm
+    autoFarmButton.MouseButton1Click:Connect(function()
+        autoFarmEnabled = not autoFarmEnabled  -- Alterna o estado do AutoFarm
+
+        if autoFarmEnabled then
+            autoFarmButton.Text = "Desativar"
+            autoFarmButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+        else
+            autoFarmButton.Text = "Ativar"
+            autoFarmButton.BackgroundColor3 = Color3.fromRGB(128, 0, 128)  -- Cor roxa
+        end
+    end)
+
+    -- Criar a barra deslizante para controlar a velocidade
+    local speedSlider = Instance.new("Frame")
+    speedSlider.Parent = frame
+    speedSlider.Size = UDim2.new(1, -20, 0.07, 0)  -- Barra bem menor (80x15)
+    speedSlider.Position = UDim2.new(0, 10, 0, 80)
+    speedSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    speedSlider.BorderSizePixel = 0
+
+    local speedBar = Instance.new("Frame")
+    speedBar.Parent = speedSlider
+    speedBar.Size = UDim2.new(walkSpeed / 256, 0, 1, 0)  -- Tamanho da barra baseado na velocidade
+    speedBar.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+
+    local speedLabel = Instance.new("TextLabel")
+    speedLabel.Parent = frame
+    speedLabel.Size = UDim2.new(1, 0, 0.1, 0)
+    speedLabel.Position = UDim2.new(0, 0, 0.9, 0)
+    speedLabel.BackgroundTransparency = 1
+    speedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    speedLabel.Text = "Velocidade: " .. walkSpeed
+
+    -- Função para alterar a velocidade
+    speedSlider.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            local mousePos = input.Position.X - speedSlider.AbsolutePosition.X
+            local clampedValue = math.clamp(mousePos / speedSlider.AbsoluteSize.X, 0, 1)  -- Valor entre 0 e 1
+            walkSpeed = math.floor(clampedValue * 256)  -- A velocidade vai de 0 a 256
+            speedBar.Size = UDim2.new(clampedValue, 0, 1, 0)  -- Atualiza a barra
+            speedLabel.Text = "Velocidade: " .. walkSpeed  -- Atualiza o texto da velocidade
+            attacker.Humanoid.WalkSpeed = walkSpeed  -- Aplica a velocidade ao personagem
+        end
+    end)
+end
+
+-- Função para criar o ESP dos jogadores
+local function createESP()
+    for _, otherPlayer in pairs(game.Players:GetChildren()) do
+        if otherPlayer ~= player and otherPlayer.Character then
+            -- Criar o BillboardGui para o nome
+            local billboard = Instance.new("BillboardGui")
+            billboard.Parent = otherPlayer.Character:WaitForChild("Head")
+            billboard.Adornee = otherPlayer.Character:WaitForChild("Head")
+            billboard.Size = UDim2.new(0, 100, 0, 50)
+            billboard.AlwaysOnTop = true
+
+            -- Criar o label de texto (nome do jogador)
+            local label = Instance.new("TextLabel")
+            label.Parent = billboard
+            label.Size = UDim2.new(1, 0, 1, 0)
+            label.Text = otherPlayer.Name
+            label.BackgroundTransparency = 1
+            label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            label.TextScaled = true
+        end
+    end
+end
+
+-- Função para realizar o AutoFarm
+local function autoFarm()
+    while true do
+        if autoFarmEnabled and mobs and attacker then
+            for _, mob in pairs(mobs:GetChildren()) do
+                local humanoid = mob:FindFirstChildOfClass("Humanoid")
+                if humanoid then
+                    local mobPosition = mob.HumanoidRootPart.Position
+                    local attackerPosition = attacker.HumanoidRootPart.Position
+                    local distance = (mobPosition - attackerPosition).Magnitude
+
+                    if distance <= maxAttackDistance then
+                        humanoid.Health = 0 -- Atacar o mob
+                    end
+                end
+            end
+        end
+        wait(0.5) -- Atraso para reduzir o uso de recursos
+    end
+end
+
+-- Criar o menu quando o jogo inicia
+createMenu()
+
+-- Criar o ESP de jogadores
+createESP()
+
+-- Começa o AutoFarm (a função só vai rodar se o AutoFarm estiver ativado)
+spawn(autoFarm)
