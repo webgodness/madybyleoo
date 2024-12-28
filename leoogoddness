@@ -98,7 +98,7 @@ local function createMenu()
         autoFarmEnabled = not autoFarmEnabled
 
         if autoFarmEnabled then
-            autoFarmButton.Text = "Desativar"
+            autoFarmButton.Text = "Turn Off"
             autoFarmButton.BackgroundColor3 = Color3.fromRGB(139, 0, 0)  -- Vermelho escuro
         else
             autoFarmButton.Text = "AutoFarm"
