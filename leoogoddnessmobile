@@ -16,7 +16,7 @@ local function createMenu()
     -- Criar o frame maior
     local frame = Instance.new("Frame")
     frame.Parent = screenGui
-    frame.Size = UDim2.new(0, 400, 0, 450)  -- Tamanho ajustado para celular
+    frame.Size = UDim2.new(0.8, 0, 0.8, 0)  -- Ajusta a largura para 80% e a altura para 80% da tela
     frame.Position = UDim2.new(0.5, -200, 0.5, -225)  -- Centralizado na tela
     frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)  -- Fundo escuro (cinza)
     frame.BorderSizePixel = 0
@@ -28,7 +28,7 @@ local function createMenu()
     local closeButton = Instance.new("TextButton")
     closeButton.Parent = frame
     closeButton.Size = UDim2.new(0, 40, 0, 40)
-    closeButton.Position = UDim2.new(1, -50, 0, 10)  -- Posição no canto superior direito
+    closeButton.Position = UDim2.new(1, -10, 0, 10)  -- Posição no canto superior direito
     closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)  -- Cor vermelha
     closeButton.Text = "X"
     closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -73,7 +73,7 @@ local function createMenu()
     -- Adicionar a marca d'água "Made By Leoo" no topo do menu
     local watermarkLabel = Instance.new("TextLabel")
     watermarkLabel.Parent = frame
-    watermarkLabel.Size = UDim2.new(0, 200, 0, 30)
+    watermarkLabel.Size = UDim2.new(0.6, 0, 0, 30)  -- Ajustado para 60% da largura
     watermarkLabel.Position = UDim2.new(0.5, -100, 0, 20)
     watermarkLabel.BackgroundTransparency = 1
     watermarkLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -86,7 +86,7 @@ local function createMenu()
     -- Adicionar o link do Discord no centro inferior do menu
     local discordLabel = Instance.new("TextLabel")
     discordLabel.Parent = frame
-    discordLabel.Size = UDim2.new(0, 200, 0, 20)
+    discordLabel.Size = UDim2.new(0.6, 0, 0, 20)  -- Ajustado para 60% da largura
     discordLabel.Position = UDim2.new(0.5, -100, 1, -30)
     discordLabel.BackgroundTransparency = 1
     discordLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -98,7 +98,7 @@ local function createMenu()
     -- Criar o botão de AutoFarm
     local autoFarmButton = Instance.new("TextButton")
     autoFarmButton.Parent = frame
-    autoFarmButton.Size = UDim2.new(0.6, 0, 0, 50)  -- Tamanho ajustado proporcionalmente
+    autoFarmButton.Size = UDim2.new(0.8, 0, 0, 50)  -- Ajustado para 80% da largura
     autoFarmButton.Position = UDim2.new(0.5, -100, 0, 80)
     autoFarmButton.BackgroundColor3 = Color3.fromRGB(0, 0, 139)  -- Azul escuro
     autoFarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -127,7 +127,7 @@ local function createMenu()
     -- Criar o slider de WalkSpeed
     local walkSpeedSlider = Instance.new("Frame")
     walkSpeedSlider.Parent = frame
-    walkSpeedSlider.Size = UDim2.new(0.6, 0, 0, 10)  -- Tamanho ajustado proporcionalmente
+    walkSpeedSlider.Size = UDim2.new(0.8, 0, 0, 10)  -- Ajustado para 80% da largura
     walkSpeedSlider.Position = UDim2.new(0.5, -100, 0, 140)
     walkSpeedSlider.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     walkSpeedSlider.BorderSizePixel = 0
@@ -144,7 +144,7 @@ local function createMenu()
     -- Exibir a velocidade do WalkSpeed no menu
     local walkSpeedLabel = Instance.new("TextLabel")
     walkSpeedLabel.Parent = frame
-    walkSpeedLabel.Size = UDim2.new(0.6, 0, 0, 30)
+    walkSpeedLabel.Size = UDim2.new(0.8, 0, 0, 30)  -- Ajustado para 80% da largura
     walkSpeedLabel.Position = UDim2.new(0.5, -100, 0, 170)
     walkSpeedLabel.BackgroundTransparency = 1
     walkSpeedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
