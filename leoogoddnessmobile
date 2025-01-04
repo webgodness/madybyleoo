@@ -1,159 +1,156 @@
--- Variáveis do script
 local player = game.Players.LocalPlayer
-local attacker = player.Character or player.CharacterAdded:Wait()
-local maxAttackDistance = 999  -- Raio de busca para mobs (ajuste conforme necessário)
-local autoFarmEnabled = false -- Flag para verificar se o AutoFarm está ativado
-local autoTeleportEnabled = false -- Flag para verificar se o AutoTeleport está ativado
-local walkSpeed = 16 -- Velocidade inicial do personagem
-local menuVisible = true -- Variável para controlar a visibilidade do menu
-local mobs = workspace:WaitForChild("Objects"):FindFirstChild("Mobs") -- Referência para os mobs (ajuste conforme necessário)
+local attacker = player.Character
+local maxAttackDistance = 999
+local autoFarmEnabled, autoFarmV2Enabled, walkSpeed = false, false, 16
+local menuVisible = true
+local mobs = workspace.Objects:FindFirstChild("Mobs")
 
--- Função para criar o Menu
+local function createElement(className, properties)
+    local element = Instance.new(className)
+    for prop, value in pairs(properties) do
+        element[prop] = value
+    end
+    return element
+end
+
 local function createMenu()
-    -- Criar a GUI
-    local screenGui = Instance.new("ScreenGui")
-    screenGui.Parent = player:WaitForChild("PlayerGui")
-
-    -- Criar o frame maior com tamanho ajustado para 500x550
-    local frame = Instance.new("Frame")
-    frame.Parent = screenGui
-    frame.Size = UDim2.new(0, 350, 0, 350)  -- Tamanho ajustado para 500x550
-    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)  -- Fundo escuro (cinza)
-    frame.BorderSizePixel = 0
-    frame.AnchorPoint = Vector2.new(0, 0)  -- Centralizar no meio da tela
-    frame.BackgroundTransparency = 0.3  -- Transparência suave para um efeito de sombra
-    frame.ClipsDescendants = true  -- Para que os filhos do frame não saiam dos limites
-
-    -- Criar o botão "X" para fechar o menu no canto superior direito
-    local closeButton = Instance.new("TextButton")
-    closeButton.Parent = frame
-    closeButton.Size = UDim2.new(0, 30, 0, 30)
-    closeButton.Position = UDim2.new(1, -10, 0, 10)  -- Posição no canto superior direito
-    closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)  -- Cor vermelha
-    closeButton.Text = "X"
-    closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    closeButton.Font = Enum.Font.GothamBold
-    closeButton.TextSize = 18
-    closeButton.TextScaled = true
-    closeButton.BorderSizePixel = 0
-    closeButton.AnchorPoint = Vector2.new(1, 0)
-
-    -- Criar o quadrado preto no canto superior direito (visível após fechar o menu)
-    local reopenButton = Instance.new("TextButton")  -- Mudado para TextButton para ser clicável
-    reopenButton.Parent = screenGui
-    reopenButton.Size = UDim2.new(0, 40, 0, 40)
-    reopenButton.Position = UDim2.new(1, -50, 0, 10)  -- Posição no canto superior direito
-    reopenButton.BackgroundColor3 = Color3.fromRGB(0, 0, 0)  -- Cor preta
-    reopenButton.Visible = false  -- Inicialmente invisível
-    reopenButton.AnchorPoint = Vector2.new(1, 0)
-    reopenButton.Text = ""  -- Sem texto
-
-    -- Função para fechar o menu
-    local function closeMenu()
-        frame.Visible = false  -- Oculta o menu
-        reopenButton.Visible = true  -- Exibe o quadrado preto para reabrir o menu
-    end
-
-    -- Função para reabrir o menu
-    local function reopenMenu()
-        frame.Visible = true  -- Exibe o menu
-        reopenButton.Visible = false  -- Oculta o quadrado preto
-    end
-
-    -- Conectar o botão "X" para fechar o menu
-    closeButton.MouseButton1Click:Connect(function()
-        closeMenu()
+    local screenGui = createElement("ScreenGui", {Parent = player:WaitForChild("PlayerGui")})
+    local frame = createElement("Frame", {
+        Parent = screenGui,
+        Size = UDim2.new(0, 500, 0, 550),
+        BackgroundColor3 = Color3.fromRGB(0, 0, 0),
+        BorderSizePixel = 0,
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        ClipsDescendants = true
+    })
+    
+    local dragging, dragStart, startPos = false, nil, nil
+    frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            -- Usar toque para arrastar
+            dragging, dragStart, startPos = true, input.Position, frame.Position
+        end
     end)
-
-    -- Conectar o quadrado preto para reabrir o menu
-    reopenButton.MouseButton1Click:Connect(function()
-        reopenMenu()
-    end)
-
-    -- Adicionar a marca d'água "Made By Leoo" no topo do menu
-    local watermarkLabel = Instance.new("TextLabel")
-    watermarkLabel.Parent = frame
-    watermarkLabel.Size = UDim2.new(0, 200, 0, 30)
-    watermarkLabel.Position = UDim2.new(0.5, -100, 0, 10)
-    watermarkLabel.BackgroundTransparency = 1
-    watermarkLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    watermarkLabel.Text = "Made By Leoo"
-    watermarkLabel.TextScaled = true
-    watermarkLabel.TextTransparency = 0.5  -- Tornar o texto semi-transparente
-    watermarkLabel.Font = Enum.Font.GothamSemibold  -- Fonte moderna e limpa
-    watermarkLabel.TextSize = 16
-
-    -- Adicionar o link do Discord no centro inferior do menu
-    local discordLabel = Instance.new("TextLabel")
-    discordLabel.Parent = frame
-    discordLabel.Size = UDim2.new(0, 200, 0, 20)
-    discordLabel.Position = UDim2.new(0.5, -100, 1, -30)
-    discordLabel.BackgroundTransparency = 1
-    discordLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-    discordLabel.Text = "https://discord.gg/p4drBcNg3H"
-    discordLabel.TextScaled = true
-    discordLabel.TextSize = 12
-    discordLabel.Font = Enum.Font.Gotham
-
-    -- Criar o botão de AutoFarm
-    local autoFarmButton = Instance.new("TextButton")
-    autoFarmButton.Parent = frame
-    autoFarmButton.Size = UDim2.new(0, 200, 0, 40)  -- Tamanho ajustado
-    autoFarmButton.Position = UDim2.new(0.5, -110, 0, 80)  -- Ajustado para o centro horizontal
-    autoFarmButton.BackgroundColor3 = Color3.fromRGB(0, 0, 139)  -- Azul escuro
-    autoFarmButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    autoFarmButton.Text = "AutoFarm"
-    autoFarmButton.Font = Enum.Font.GothamBold
-    autoFarmButton.TextSize = 18
-    autoFarmButton.TextScaled = true
-    autoFarmButton.BorderSizePixel = 0
-    autoFarmButton.AnchorPoint = Vector2.new(0.5, 0.5)
-    autoFarmButton.BackgroundTransparency = 0.3  -- Transparência suave
-    autoFarmButton.ClipsDescendants = true
-
-    -- Função para alternar o AutoFarm
-    autoFarmButton.MouseButton1Click:Connect(function()
-        autoFarmEnabled = not autoFarmEnabled
-
-        if autoFarmEnabled then
-            autoFarmButton.Text = "Turn Off"
-            autoFarmButton.BackgroundColor3 = Color3.fromRGB(139, 0, 0)  -- Vermelho escuro
-        else
-            autoFarmButton.Text = "AutoFarm"
-            autoFarmButton.BackgroundColor3 = Color3.fromRGB(0, 0, 139)  -- Azul escuro
+    
+    frame.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType == Enum.UserInputType.Touch then
+            local delta = input.Position - dragStart
+            frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end)
 
-    -- Criar o botão de AutoTeleport
-    local autoTeleportButton = Instance.new("TextButton")
-    autoTeleportButton.Parent = frame
-    autoTeleportButton.Size = UDim2.new(0, 200, 0, 40)  -- Tamanho ajustado
-    autoTeleportButton.Position = UDim2.new(0.5, -110, 0, 140)  -- Ajustado para o centro horizontal, abaixo do AutoFarm
-    autoTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 139, 139)  -- Cor do botão de teleport
-    autoTeleportButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    autoTeleportButton.Text = "AutoTeleport"
-    autoTeleportButton.Font = Enum.Font.GothamBold
-    autoTeleportButton.TextSize = 18
-    autoTeleportButton.TextScaled = true
-    autoTeleportButton.BorderSizePixel = 0
-    autoTeleportButton.AnchorPoint = Vector2.new(0.5, 0.5)
-    autoTeleportButton.BackgroundTransparency = 0.3  -- Transparência suave
-    autoTeleportButton.ClipsDescendants = true
-
-    -- Função para alternar o AutoTeleport
-    autoTeleportButton.MouseButton1Click:Connect(function()
-        autoTeleportEnabled = not autoTeleportEnabled
-
-        if autoTeleportEnabled then
-            autoTeleportButton.Text = "Turn Off"
-            autoTeleportButton.BackgroundColor3 = Color3.fromRGB(139, 139, 0)  -- Amarelo escuro
-        else
-            autoTeleportButton.Text = "AutoTeleport"
-            autoTeleportButton.BackgroundColor3 = Color3.fromRGB(0, 139, 139)  -- Cor original
+    frame.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
         end
     end)
 
-    -- Criar o slider de WalkSpeed
+    local watermark = createElement("TextLabel", {
+        Parent = frame, Size = UDim2.new(0, 200, 0, 30),
+        Position = UDim2.new(0.5, -100, 0, 10),
+        BackgroundTransparency = 1, Text = "Made By Leoo",
+        TextColor3 = Color3.fromRGB(255, 255, 255), TextScaled = true,
+        Font = Enum.Font.GothamSemibold, TextSize = 22, TextTransparency = 0.5
+    })
+
+    local discord = createElement("TextLabel", {
+        Parent = frame, Size = UDim2.new(0, 200, 0, 20),
+        Position = UDim2.new(0.5, -100, 1, -30), BackgroundTransparency = 1,
+        Text = "https://discord.gg/p4drBcNg3H", TextColor3 = Color3.fromRGB(255, 255, 255),
+        TextScaled = true, Font = Enum.Font.Gotham, TextSize = 22
+    })
+
+    local function createButton(text, position, callback)
+        local button = createElement("TextButton", {
+            Parent = frame, Size = UDim2.new(0, 200, 0, 40),
+            Position = position, BackgroundColor3 = Color3.fromRGB(0, 0, 139),
+            TextColor3 = Color3.fromRGB(255, 255, 255), Text = text,
+            Font = Enum.Font.GothamBold, TextSize = 18, TextScaled = true,
+            BorderSizePixel = 0, AnchorPoint = Vector2.new(0.5, 0.5),
+            BackgroundTransparency = 0.3, ClipsDescendants = true
+        })
+        button.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+                callback()
+            end
+        end)
+        return button
+    end
+
+    local autoFarmButton = createElement("TextButton", {
+        Parent = frame,
+        Size = UDim2.new(0, 15, 0, 15),  
+        Position = UDim2.new(0, 20, 0, 80),
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+        TextColor3 = Color3.fromRGB(0, 0, 0),
+        Font = Enum.Font.Gotham,
+        Text = "",
+        TextSize = 8,
+        BorderSizePixel = 2,
+        BorderColor3 = Color3.fromRGB(0, 0, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 0
+    })
+
+    local autoFarmText = createElement("TextLabel", {
+        Parent = frame,
+        Size = UDim2.new(0, 100, 0, 20),  
+        Position = UDim2.new(0, 35, 0, 75),
+        BackgroundTransparency = 1,
+        Text = "AutoFarm",  
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.Gotham,
+        TextSize = 14,  
+        TextScaled = true
+    })
+
+    local autoFarmV2Button = createElement("TextButton", {
+        Parent = frame,
+        Size = UDim2.new(0, 15, 0, 15),  
+        Position = UDim2.new(0, 20, 0, 120),  
+        BackgroundColor3 = Color3.fromRGB(255, 255, 255),  
+        TextColor3 = Color3.fromRGB(0, 0, 0),
+        Font = Enum.Font.Gotham,
+        Text = "",
+        TextSize = 8,  
+        BorderSizePixel = 2,  
+        BorderColor3 = Color3.fromRGB(0, 0, 0),
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        BackgroundTransparency = 0
+    })
+
+    local autoFarmV2Text = createElement("TextLabel", {
+        Parent = frame,
+        Size = UDim2.new(0, 120, 0, 20),  
+        Position = UDim2.new(0, 35, 0, 118),  
+        BackgroundTransparency = 1,
+        Text = "AutoFarm V2",  
+        TextColor3 = Color3.fromRGB(255, 255, 255),
+        Font = Enum.Font.Gotham,
+        TextSize = 14,  
+        TextScaled = true
+    })
+
+    local function updateButtonColors()
+        autoFarmButton.BackgroundColor3 = autoFarmEnabled and Color3.fromRGB(0, 0, 255) or Color3.fromRGB(255, 255, 255)
+        autoFarmV2Button.BackgroundColor3 = autoFarmV2Enabled and Color3.fromRGB(0, 0, 255) or Color3.fromRGB(255, 255, 255)
+    end
+
+    autoFarmButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            autoFarmEnabled = not autoFarmEnabled
+            updateButtonColors()
+        end
+    end)
+
+    autoFarmV2Button.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+            autoFarmV2Enabled = not autoFarmV2Enabled
+            updateButtonColors()
+        end
+    end)
+
+    -- Ajuste para o slider de WalkSpeed funcionar corretamente em toque
     local walkSpeedSlider = Instance.new("Frame")
     walkSpeedSlider.Parent = frame
     walkSpeedSlider.Size = UDim2.new(0, 200, 0, 10)
@@ -161,16 +158,14 @@ local function createMenu()
     walkSpeedSlider.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
     walkSpeedSlider.BorderSizePixel = 0
 
-    -- Criar o ponteiro do slider (Visual)
     local sliderButton = Instance.new("TextButton")
     sliderButton.Parent = walkSpeedSlider
     sliderButton.Size = UDim2.new(0, 20, 0, 20)
-    sliderButton.Position = UDim2.new(0, 0, 0, -5)  -- Inicialmente na posição mínima
+    sliderButton.Position = UDim2.new(0, 0, 0, -5)  
     sliderButton.BackgroundColor3 = Color3.fromRGB(0, 0, 255)
     sliderButton.Text = ""
     sliderButton.BorderSizePixel = 0
 
-    -- Exibir a velocidade do WalkSpeed no menu
     local walkSpeedLabel = Instance.new("TextLabel")
     walkSpeedLabel.Parent = frame
     walkSpeedLabel.Size = UDim2.new(0, 200, 0, 20)
@@ -181,43 +176,36 @@ local function createMenu()
     walkSpeedLabel.TextScaled = true
     walkSpeedLabel.Font = Enum.Font.Gotham
 
-    -- Função para atualizar o WalkSpeed
     local function updateWalkSpeed()
-        if attacker and attacker:FindFirstChild("Humanoid") then
-            attacker.Humanoid.WalkSpeed = walkSpeed
-            walkSpeedLabel.Text = "WalkSpeed: " .. walkSpeed
-        end
+        player.Character.Humanoid.WalkSpeed = walkSpeed
+        walkSpeedLabel.Text = "WalkSpeed: " .. walkSpeed
     end
 
-    -- Função para ajustar o WalkSpeed com o slider
     local dragging = false
 
     sliderButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.Touch then
             dragging = true
         end
     end)
 
-    -- Atualiza o WalkSpeed enquanto o botão do slider é arrastado
     walkSpeedSlider.InputChanged:Connect(function(input)
-        if dragging then
-            local mouse = player:GetMouse()
-            local offset = math.clamp(mouse.X - walkSpeedSlider.AbsolutePosition.X, 0, walkSpeedSlider.AbsoluteSize.X)
+        if dragging and input.UserInputType == Enum.UserInputType.Touch then
+            local touchPos = input.Position
+            local offset = math.clamp(touchPos.X - walkSpeedSlider.AbsolutePosition.X, 0, walkSpeedSlider.AbsoluteSize.X)
             local newWalkSpeed = math.floor(((offset / walkSpeedSlider.AbsoluteSize.X) * (516 - 16)) + 16)
             walkSpeed = math.clamp(newWalkSpeed, 16, 516)
-            sliderButton.Position = UDim2.new(0, offset, 0, -5)  -- Atualiza a posição do ponteiro visualmente
+            sliderButton.Position = UDim2.new(0, offset, 0, -5)  
             updateWalkSpeed()
         end
     end)
 
-    -- Interrompe o arraste do ponteiro ao soltar o botão do mouse
     sliderButton.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        if input.UserInputType == Enum.UserInputType.Touch then
             dragging = false
         end
     end)
 
-    -- Função para garantir que o menu permaneça centralizado
     local function centerMenu()
         local screenSize = workspace.CurrentCamera.ViewportSize
         local menuWidth = frame.Size.X.Offset
@@ -225,70 +213,51 @@ local function createMenu()
         frame.Position = UDim2.new(0.5, -menuWidth / 2, 0.5, -menuHeight / 2)
     end
 
-    -- Centraliza o menu ao ser criado e sempre que o tamanho da tela mudar
     centerMenu()
     game:GetService("Workspace").CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(centerMenu)
 
-    -- Função para alternar a visibilidade do menu com a tecla ALT DIREITO
     game:GetService("UserInputService").InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.RightAlt then
-            menuVisible = not menuVisible  -- Alterna a visibilidade do menu
-            frame.Visible = menuVisible  -- Exibe ou oculta o menu
+        if input.UserInputType == Enum.UserInputType.Touch then
+            menuVisible = not menuVisible
+            frame.Visible = menuVisible
         end
     end)
+
+    updateButtonColors()
 end
 
--- Função para realizar o AutoFarm
-local function autoFarmMobs()
+local function autoFarmAndTeleport()
     while true do
         if autoFarmEnabled and mobs then
-            for i, mob in pairs(mobs:GetChildren()) do
+            for _, mob in pairs(mobs:GetChildren()) do
                 local humanoid = mob:FindFirstChildOfClass("Humanoid")
                 if humanoid then
                     local mobPosition = mob.HumanoidRootPart.Position
                     local attackerPosition = attacker.HumanoidRootPart.Position
                     local distance = (mobPosition - attackerPosition).Magnitude
-
                     if distance <= maxAttackDistance then
-                        -- Aqui você pode implementar o ataque
-                        humanoid.Health = 0  -- Exemplo de atacar o mob, matando-o imediatamente
+                        humanoid.Health = 0
+                        attacker.HumanoidRootPart.CFrame = mob.HumanoidRootPart.CFrame
                     end
                 end
             end
         end
-        wait(0) -- Atraso para reduzir o uso de recursos
-    end
-end
-
--- Função para teletransportar o jogador até o mob mais próximo
-local function autoTeleportToMob()
-    while true do
-        if autoTeleportEnabled and mobs then
-            local closestMob = nil
-            local closestDistance = maxAttackDistance
-            for i, mob in pairs(mobs:GetChildren()) do
+        if autoFarmV2Enabled and mobs then
+            for _, mob in pairs(mobs:GetChildren()) do
                 local humanoid = mob:FindFirstChildOfClass("Humanoid")
                 if humanoid then
                     local mobPosition = mob.HumanoidRootPart.Position
                     local attackerPosition = attacker.HumanoidRootPart.Position
                     local distance = (mobPosition - attackerPosition).Magnitude
-
-                    if distance < closestDistance then
-                        closestDistance = distance
-                        closestMob = mob
+                    if distance <= maxAttackDistance then
+                        humanoid.Health = 0
                     end
                 end
             end
-
-            if closestMob then
-                -- Teleportando o jogador até o mob mais próximo
-                attacker.HumanoidRootPart.CFrame = closestMob.HumanoidRootPart.CFrame
-            end
         end
-        wait(0) -- Atraso para reduzir o uso de recursos
+        wait(0.3)
     end
 end
 
 createMenu()
-autoFarmMobs()
-autoTeleportToMob()
+spawn(autoFarmAndTeleport)
